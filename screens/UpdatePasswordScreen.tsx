@@ -2,77 +2,78 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogIn } from 'lucide-react-native';
+import { LockKeyhole } from 'lucide-react-native';
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+export default function UpdatePasswordScreen() {
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const navigation = useNavigation();
 
-  async function signInWithEmail() {
+  async function updatePassword() {
+    if (password !== confirmPassword) {
+      Alert.alert('Validation Error', 'Passwords do not match!');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Validation Error', 'Password must be at least 6 characters long.');
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
+    const { error } = await supabase.auth.updateUser({
       password: password,
     });
 
-    if (error) Alert.alert('Login Failed', error.message);
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      Alert.alert('Success', 'Password has been successfully updated!');
+      navigation.navigate('Dashboard' as never); // Will navigate or reset state
+    }
     setLoading(false);
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
-        <LogIn size={48} color="#2563eb" />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to your UangQ account</Text>
+        <LockKeyhole size={48} color="#2563eb" />
+        <Text style={styles.title}>Update Password</Text>
+        <Text style={styles.subtitle}>Please enter your new password</Text>
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={(text) => setEmail(text)}
-          value={email}
-          placeholder="email@address.com"
-          autoCapitalize={'none'}
-          keyboardType="email-address"
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <View style={styles.passwordHeader}>
-          <Text style={styles.label}>Password</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={styles.forgotPassword}>Forgot?</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.label}>New Password</Text>
         <TextInput
           style={styles.input}
           onChangeText={(text) => setPassword(text)}
           value={password}
           secureTextEntry={true}
-          placeholder="Password"
+          placeholder="New Password"
+          autoCapitalize={'none'}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Confirm New Password</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(text) => setConfirmPassword(text)}
+          value={confirmPassword}
+          secureTextEntry={true}
+          placeholder="Confirm New Password"
           autoCapitalize={'none'}
         />
       </View>
 
       <TouchableOpacity 
         style={[styles.button, loading && styles.buttonDisabled]} 
-        onPress={signInWithEmail} 
+        onPress={updatePassword} 
         disabled={loading}
       >
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Update Password</Text>}
       </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.link}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -98,17 +99,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#64748b',
     marginTop: 8,
-  },
-  passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  forgotPassword: {
-    color: '#2563eb',
-    fontSize: 14,
-    fontWeight: '500',
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 16,
@@ -140,18 +131,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    color: '#64748b',
-  },
-  link: {
-    color: '#2563eb',
     fontWeight: '600',
   },
 });

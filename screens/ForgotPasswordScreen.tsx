@@ -2,33 +2,39 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogIn } from 'lucide-react-native';
+import { KeyRound } from 'lucide-react-native';
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const navigation = useNavigation();
 
-  async function signInWithEmail() {
+  async function resetPassword() {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://uangq.vercel.app/update-password',
     });
 
-    if (error) Alert.alert('Login Failed', error.message);
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      Alert.alert('Success', 'Check your email for the password reset link!');
+      navigation.goBack();
+    }
     setLoading(false);
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
-        <LogIn size={48} color="#2563eb" />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to your UangQ account</Text>
+        <KeyRound size={48} color="#2563eb" />
+        <Text style={styles.title}>Reset Password</Text>
+        <Text style={styles.subtitle}>Enter your email to receive a reset link</Text>
       </View>
 
       <View style={styles.inputContainer}>
@@ -42,37 +48,18 @@ export default function LoginScreen() {
           keyboardType="email-address"
         />
       </View>
-      <View style={styles.inputContainer}>
-        <View style={styles.passwordHeader}>
-          <Text style={styles.label}>Password</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={styles.forgotPassword}>Forgot?</Text>
-          </TouchableOpacity>
-        </View>
-        <TextInput
-          style={styles.input}
-          onChangeText={(text) => setPassword(text)}
-          value={password}
-          secureTextEntry={true}
-          placeholder="Password"
-          autoCapitalize={'none'}
-        />
-      </View>
 
       <TouchableOpacity 
         style={[styles.button, loading && styles.buttonDisabled]} 
-        onPress={signInWithEmail} 
+        onPress={resetPassword} 
         disabled={loading}
       >
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Reset Link</Text>}
       </TouchableOpacity>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.link}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Text style={styles.link}>Back to Login</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -95,20 +82,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
     marginTop: 8,
-  },
-  passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  forgotPassword: {
-    color: '#2563eb',
-    fontSize: 14,
-    fontWeight: '500',
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 16,
@@ -142,13 +119,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  backButton: {
+    alignItems: 'center',
     marginTop: 32,
-  },
-  footerText: {
-    color: '#64748b',
   },
   link: {
     color: '#2563eb',
